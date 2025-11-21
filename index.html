@@ -19,6 +19,7 @@
             <button class="nav-btn active" data-view="dashboard">Dashboard</button>
             <button class="nav-btn" data-view="actions">Saisie</button>
             <button class="nav-btn" data-view="settings">Paramétrage</button>
+            <button class="nav-btn" data-view="guide">Mode d'emploi</button>
         </nav>
 
         <!-- Main Content Area -->
@@ -83,10 +84,10 @@
                                 <tr>
                                     <th>Date/Heure</th>
                                     <th>Action</th>
-                                    <th>Δ P1</th>
-                                    <th>Δ P2</th>
-                                    <th>Total P1</th>
-                                    <th>Total P2</th>
+                                    <th>Effet Acteur</th>
+                                    <th>Effet Partenaire</th>
+                                    <th>Total Acteur</th>
+                                    <th>Total Partenaire</th>
                                     <th>Note</th>
                                 </tr>
                             </thead>
@@ -232,12 +233,12 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Δ Partenaire 1</label>
-                                <input type="number" id="action-delta1" value="0">
+                                <label>Impact Acteur</label>
+                                <input type="number" id="action-impact-acteur" value="0">
                             </div>
                             <div class="form-group">
-                                <label>Δ Partenaire 2</label>
-                                <input type="number" id="action-delta2" value="0">
+                                <label>Impact Partenaire</label>
+                                <input type="number" id="action-impact-partenaire" value="0">
                             </div>
                         </div>
 
@@ -260,6 +261,110 @@
                         <button class="btn btn-secondary" id="import-actions-btn">Importer Actions (CSV)</button>
                         <input type="file" id="import-actions-file" accept=".csv" style="display:none;">
                     </div>
+                </div>
+            </section>
+
+            <!-- Guide View -->
+            <section id="guide-view" class="view">
+                <h2>Mode d'emploi</h2>
+
+                <div class="guide-section">
+                    <h3>🌸 Pourquoi LoveMeter ?</h3>
+                    <p>LoveMeter est un outil qui mesure <strong>l'impact des actions affectives</strong> entre deux partenaires.</p>
+                    <ul>
+                        <li>Il mesure les <strong>gestes</strong>, pas les personnes</li>
+                        <li>Il rend visibles les <strong>dynamiques</strong> relationnelles</li>
+                        <li>C'est un outil de <strong>dialogue</strong> et de débriefing</li>
+                        <li>Il ne juge pas et ne désigne pas de coupable</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>📊 Notion de Δ (delta)</h3>
+                    <p>Le <strong>Δ</strong> représente la <strong>variation du stock de fleurs</strong> émotionnelles.</p>
+                    <p>Chaque action a <strong>deux effets</strong> :</p>
+                    <ul>
+                        <li><strong>Impact Acteur</strong> : effet sur celui qui agit</li>
+                        <li><strong>Impact Partenaire</strong> : effet sur celui qui reçoit</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>💡 Exemples</h3>
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Impact Acteur</th>
+                                <th>Impact Partenaire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Dire merci</td>
+                                <td>+3</td>
+                                <td>+3</td>
+                            </tr>
+                            <tr>
+                                <td>Crier</td>
+                                <td>-2</td>
+                                <td>-4</td>
+                            </tr>
+                            <tr>
+                                <td>Écoute active</td>
+                                <td>+3</td>
+                                <td>+3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="guide-section">
+                    <h3>🌸 Émojis de fleurs (individuels)</h3>
+                    <p>Chaque partenaire a son propre état émotionnel représenté par une fleur :</p>
+                    <ul>
+                        <li><strong>🌸 Fleur vive</strong> : score ≥ 0</li>
+                        <li><strong>🥀 Fleur fanée</strong> : score &lt; 0</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>🌤️ Ambiance globale (météo du couple)</h3>
+                    <p>La météo du couple est calculée selon la <strong>somme des deux scores</strong> :</p>
+                    <p><strong>S = Fleurs P1 + Fleurs P2</strong></p>
+
+                    <h4>Si S ≥ 0 (ambiance positive) :</h4>
+                    <ul>
+                        <li><strong>⛅ Neutre / stable</strong> : |S| entre 0 et 5</li>
+                        <li><strong>🌤️ Éclaircies</strong> : |S| entre 6 et 14</li>
+                        <li><strong>🌞 Beau temps</strong> : |S| entre 15 et 29</li>
+                        <li><strong>🌞✨ Grand soleil</strong> : |S| ≥ 30</li>
+                    </ul>
+
+                    <h4>Si S &lt; 0 (ambiance difficile) :</h4>
+                    <ul>
+                        <li><strong>🌫️ Neutre / légère tension</strong> : |S| entre 0 et 5</li>
+                        <li><strong>🌧️ Averses émotionnelles</strong> : |S| entre 6 et 14</li>
+                        <li><strong>🌧️⛈️ Gros temps</strong> : |S| entre 15 et 29</li>
+                        <li><strong>⛈️ Tempête émotionnelle</strong> : |S| ≥ 30</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>🎯 Comment utiliser ?</h3>
+                    <ol>
+                        <li>Configurez vos <strong>prénoms et couleurs</strong> dans Paramétrage</li>
+                        <li>Dans Saisie, choisissez une action</li>
+                        <li>Cliquez sur le bouton correspondant à <strong>qui agit</strong></li>
+                        <li>Consultez le Dashboard pour voir l'évolution</li>
+                        <li>Utilisez l'historique pour débriefing et dialogue</li>
+                    </ol>
+                </div>
+
+                <div class="guide-section">
+                    <p class="guide-footer">
+                        <em>« Fleurs en plus, blessures en moins. »</em>
+                    </p>
                 </div>
             </section>
         </main>

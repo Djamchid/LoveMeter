@@ -43,8 +43,8 @@ export class SettingsView {
         this.actionDescription = document.getElementById('action-description');
         this.actionType = document.getElementById('action-type');
         this.actionTags = document.getElementById('action-tags');
-        this.actionDelta1 = document.getElementById('action-delta1');
-        this.actionDelta2 = document.getElementById('action-delta2');
+        this.actionImpactActeur = document.getElementById('action-impact-acteur');
+        this.actionImpactPartenaire = document.getElementById('action-impact-partenaire');
         this.saveActionBtn = document.getElementById('save-action-btn');
         this.cancelActionBtn = document.getElementById('cancel-action-btn');
 
@@ -157,8 +157,8 @@ export class SettingsView {
         const deltasDiv = document.createElement('div');
         deltasDiv.className = 'settings-action-deltas';
         deltasDiv.innerHTML = `
-            Δ P1: <strong>${this.formatDelta(action.delta1)}</strong> |
-            Δ P2: <strong>${this.formatDelta(action.delta2)}</strong> |
+            Impact Acteur: <strong>${this.formatDelta(action.impactActeur)}</strong> |
+            Impact Partenaire: <strong>${this.formatDelta(action.impactPartenaire)}</strong> |
             Type: ${action.type || 'N/A'} |
             Utilisé: ${action.usageTotal} fois
         `;
@@ -257,8 +257,8 @@ export class SettingsView {
             this.actionDescription.value = action.description;
             this.actionType.value = action.type;
             this.actionTags.value = action.tags.join(', ');
-            this.actionDelta1.value = action.delta1;
-            this.actionDelta2.value = action.delta2;
+            this.actionImpactActeur.value = action.impactActeur;
+            this.actionImpactPartenaire.value = action.impactPartenaire;
         } else {
             this.actionFormTitle.textContent = 'Nouvelle Action';
             this.actionFormId.value = '';
@@ -266,8 +266,8 @@ export class SettingsView {
             this.actionDescription.value = '';
             this.actionType.value = '';
             this.actionTags.value = '';
-            this.actionDelta1.value = 0;
-            this.actionDelta2.value = 0;
+            this.actionImpactActeur.value = 0;
+            this.actionImpactPartenaire.value = 0;
         }
 
         this.actionForm.style.display = 'block';
@@ -304,8 +304,8 @@ export class SettingsView {
             description: this.actionDescription.value.trim(),
             type: this.actionType.value.trim(),
             tags: tags,
-            delta1: parseInt(this.actionDelta1.value) || 0,
-            delta2: parseInt(this.actionDelta2.value) || 0
+            impactActeur: parseInt(this.actionImpactActeur.value) || 0,
+            impactPartenaire: parseInt(this.actionImpactPartenaire.value) || 0
         };
 
         if (this.editingActionId) {

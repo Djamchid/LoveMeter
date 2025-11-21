@@ -67,8 +67,9 @@ export class DashboardView {
         nameElement.textContent = partner.getDisplayName();
         nameElement.style.color = partner.color;
 
-        // Set flower count
-        valueElement.textContent = partner.currentFlowers;
+        // Set flower count with emoji (V1.3)
+        const flowerEmoji = partner.getFlowerEmoji();
+        valueElement.textContent = `${partner.currentFlowers} ${flowerEmoji}`;
 
         // Set alert indicator
         const alertLevel = partner.getAlertLevel(settings.alert1, settings.alert2);
@@ -86,22 +87,45 @@ export class DashboardView {
     }
 
     /**
-     * Render weather and balance indicators
+     * Render weather and balance indicators (V1.3 météo system)
      */
     renderIndicators(partners) {
-        // Calculate weather
-        const average = (partners[0].currentFlowers + partners[1].currentFlowers) / 2;
+        // Calculate weather based on V1.3 spec: S = F1 + F2, A = |S|
+        const S = partners[0].currentFlowers + partners[1].currentFlowers;
+        const A = Math.abs(S);
+
         this.weatherValue.className = 'indicator-value';
 
-        if (average > 20) {
-            this.weatherValue.classList.add('sunny');
-            this.weatherValue.textContent = '☀️ Ensoleillé';
-        } else if (average < -5) {
-            this.weatherValue.classList.add('stormy');
-            this.weatherValue.textContent = '⛈️ Orageux';
+        if (S >= 0) {
+            // Positive ambiance
+            if (A >= 30) {
+                this.weatherValue.classList.add('sunny');
+                this.weatherValue.textContent = '🌞✨ Grand soleil';
+            } else if (A >= 15) {
+                this.weatherValue.classList.add('sunny');
+                this.weatherValue.textContent = '🌞 Beau temps';
+            } else if (A >= 6) {
+                this.weatherValue.classList.add('variable');
+                this.weatherValue.textContent = '🌤️ Éclaircies';
+            } else {
+                this.weatherValue.classList.add('neutral');
+                this.weatherValue.textContent = '⛅ Neutre / stable';
+            }
         } else {
-            this.weatherValue.classList.add('variable');
-            this.weatherValue.textContent = '🌤️ Variable';
+            // Negative ambiance (S < 0)
+            if (A >= 30) {
+                this.weatherValue.classList.add('stormy');
+                this.weatherValue.textContent = '⛈️ Tempête émotionnelle';
+            } else if (A >= 15) {
+                this.weatherValue.classList.add('stormy');
+                this.weatherValue.textContent = '🌧️⛈️ Gros temps';
+            } else if (A >= 6) {
+                this.weatherValue.classList.add('rainy');
+                this.weatherValue.textContent = '🌧️ Averses émotionnelles';
+            } else {
+                this.weatherValue.classList.add('foggy');
+                this.weatherValue.textContent = '🌫️ Neutre / légère tension';
+            }
         }
 
         // Calculate balance
@@ -121,7 +145,7 @@ export class DashboardView {
     }
 
     /**
-     * Render history table
+     * Render history table (V1.3 with actorId/targetId)
      */
     renderHistory(history, partners) {
         this.historyTbody.innerHTML = '';
@@ -140,13 +164,17 @@ export class DashboardView {
         reversedHistory.forEach(entry => {
             const row = document.createElement('tr');
 
+            // Find actor and target partners
+            const actor = partners.find(p => p.id === entry.actorId) || partners[0];
+            const target = partners.find(p => p.id === entry.targetId) || partners[1];
+
             row.innerHTML = `
                 <td>${entry.getFormattedDate()}</td>
                 <td>${entry.actionName}</td>
-                <td class="${this.getDeltaClass(entry.delta1)}">${this.formatDelta(entry.delta1)}</td>
-                <td class="${this.getDeltaClass(entry.delta2)}">${this.formatDelta(entry.delta2)}</td>
-                <td style="color: ${partners[0].color}; font-weight: 600;">${entry.total1After}</td>
-                <td style="color: ${partners[1].color}; font-weight: 600;">${entry.total2After}</td>
+                <td class="${this.getDeltaClass(entry.deltaActor)}">${this.formatDelta(entry.deltaActor)}</td>
+                <td class="${this.getDeltaClass(entry.deltaPartner)}">${this.formatDelta(entry.deltaPartner)}</td>
+                <td style="color: ${actor.color}; font-weight: 600;">${entry.totalActorAfter}</td>
+                <td style="color: ${target.color}; font-weight: 600;">${entry.totalPartnerAfter}</td>
                 <td>
                     <input type="text"
                            class="note-input"

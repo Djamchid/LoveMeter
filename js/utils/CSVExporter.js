@@ -17,20 +17,21 @@ export class CSVExporter {
     }
 
     /**
-     * Export actions to CSV
+     * Export actions to CSV (V1.3 format)
      */
     static exportActions(actions) {
-        const headers = ['Nom', 'Description', 'Type', 'Tags', 'Δ P1', 'Δ P2', 'Usage Total', 'Dernier Usage', 'Actif'];
+        const headers = ['id', 'nom', 'description', 'impactActeur', 'impactPartenaire', 'type', 'tags', 'usageTotal', 'dernierUsage', 'active'];
         const rows = actions.map(action => [
+            action.id,
             action.name,
             action.description,
+            action.impactActeur,
+            action.impactPartenaire,
             action.type,
             action.tags.join('; '),
-            action.delta1,
-            action.delta2,
             action.usageTotal,
-            action.lastUsed ? new Date(action.lastUsed).toLocaleString('fr-FR') : '',
-            action.active ? 'Oui' : 'Non'
+            action.lastUsed || '',
+            action.active ? 'true' : 'false'
         ]);
 
         return this.arrayToCSV([headers, ...rows]);
@@ -106,7 +107,7 @@ export class CSVExporter {
     }
 
     /**
-     * Import history from CSV
+     * Import history from CSV (V1.3 format with backward compatibility)
      * @returns {Array} Array of HistoryEntry objects
      */
     static importHistory(csvString, partners) {
@@ -117,39 +118,64 @@ export class CSVExporter {
                 throw new Error('CSV file is empty or invalid');
             }
 
-            // Skip header row
+            const headers = lines[0];
             const dataRows = lines.slice(1);
             const history = [];
+
+            // Check if V1.3 format (has actorId/targetId columns)
+            const isV13Format = headers.includes('actorId') && headers.includes('targetId');
 
             for (const row of dataRows) {
                 if (row.length < 6) continue; // Skip invalid rows
 
-                // Parse the row
-                const [dateStr, actionName, delta1Str, delta2Str, total1Str, total2Str, note] = row;
+                let entry;
+                if (isV13Format) {
+                    // V1.3 format: timestamp, actionId, actorId, targetId, deltaActor, deltaPartner, totalActorAfter, totalPartnerAfter, note
+                    const [timestamp, actionId, actorId, targetId, deltaActorStr, deltaPartnerStr, totalActorStr, totalPartnerStr, note] = row;
 
-                // Parse date (try to parse French format)
-                let timestamp = Date.now();
-                try {
-                    const dateParts = dateStr.match(/(\d+)\/(\d+)\/(\d+)[,\s]+(\d+):(\d+)/);
-                    if (dateParts) {
-                        const [, day, month, year, hours, minutes] = dateParts;
-                        timestamp = new Date(year, month - 1, day, hours, minutes).getTime();
+                    entry = new HistoryEntry(
+                        null,
+                        timestamp, // Already in normalized format
+                        actionId || '',
+                        '', // actionName will be empty for CSV imports
+                        actorId || 'partner1',
+                        targetId || 'partner2',
+                        parseInt(deltaActorStr) || 0,
+                        parseInt(deltaPartnerStr) || 0,
+                        parseInt(totalActorStr) || 0,
+                        parseInt(totalPartnerStr) || 0,
+                        note || ''
+                    );
+                } else {
+                    // Old format: Date/Heure, Action, Δ P1, Δ P2, Total P1, Total P2, Note
+                    const [dateStr, actionName, delta1Str, delta2Str, total1Str, total2Str, note] = row;
+
+                    // Parse date (try to parse French format)
+                    let timestamp = Date.now();
+                    try {
+                        const dateParts = dateStr.match(/(\d+)\/(\d+)\/(\d+)[,\s]+(\d+):(\d+)/);
+                        if (dateParts) {
+                            const [, day, month, year, hours, minutes] = dateParts;
+                            timestamp = new Date(year, month - 1, day, hours, minutes).getTime();
+                        }
+                    } catch (e) {
+                        // Use current time if parsing fails
                     }
-                } catch (e) {
-                    // Use current time if parsing fails
-                }
 
-                const entry = new HistoryEntry(
-                    null,
-                    timestamp,
-                    '', // actionId will be empty for imported entries
-                    actionName,
-                    parseInt(delta1Str) || 0,
-                    parseInt(delta2Str) || 0,
-                    parseInt(total1Str) || 0,
-                    parseInt(total2Str) || 0,
-                    note || ''
-                );
+                    entry = new HistoryEntry(
+                        null,
+                        timestamp,
+                        '', // actionId will be empty for imported entries
+                        actionName,
+                        'partner1',
+                        'partner2',
+                        parseInt(delta1Str) || 0,
+                        parseInt(delta2Str) || 0,
+                        parseInt(total1Str) || 0,
+                        parseInt(total2Str) || 0,
+                        note || ''
+                    );
+                }
 
                 history.push(entry);
             }
@@ -157,8 +183,10 @@ export class CSVExporter {
             // Recalculate current flowers from last entry
             if (history.length > 0 && partners) {
                 const lastEntry = history[history.length - 1];
-                partners[0].currentFlowers = lastEntry.total1After;
-                partners[1].currentFlowers = lastEntry.total2After;
+                const actor = partners.find(p => p.id === lastEntry.actorId) || partners[0];
+                const target = partners.find(p => p.id === lastEntry.targetId) || partners[1];
+                actor.currentFlowers = lastEntry.totalActorAfter;
+                target.currentFlowers = lastEntry.totalPartnerAfter;
             }
 
             return history;
@@ -169,7 +197,7 @@ export class CSVExporter {
     }
 
     /**
-     * Import actions from CSV
+     * Import actions from CSV (V1.3 format with backward compatibility)
      * @returns {Array} Array of Action objects
      */
     static importActions(csvString) {
@@ -180,40 +208,66 @@ export class CSVExporter {
                 throw new Error('CSV file is empty or invalid');
             }
 
-            // Skip header row
+            const headers = lines[0];
             const dataRows = lines.slice(1);
             const actions = [];
+
+            // Check if V1.3 format
+            const isV13Format = headers.includes('impactActeur') && headers.includes('impactPartenaire');
 
             for (const row of dataRows) {
                 if (row.length < 6) continue; // Skip invalid rows
 
-                const [name, description, type, tagsStr, delta1Str, delta2Str, usageTotalStr, lastUsedStr, activeStr] = row;
+                let action;
+                if (isV13Format) {
+                    // V1.3 format: id, nom, description, impactActeur, impactPartenaire, type, tags, usageTotal, dernierUsage, active
+                    const [id, name, description, impactActeurStr, impactPartenaireStr, type, tagsStr, usageTotalStr, lastUsedStr, activeStr] = row;
 
-                // Parse tags
-                const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
+                    // Parse tags
+                    const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
 
-                // Parse lastUsed
-                let lastUsed = null;
-                if (lastUsedStr) {
-                    try {
-                        lastUsed = new Date(lastUsedStr).getTime();
-                    } catch (e) {
-                        // Ignore parsing error
+                    action = new Action(
+                        id || null,
+                        name,
+                        description || '',
+                        type || '',
+                        tags,
+                        parseInt(impactActeurStr) || 0,
+                        parseInt(impactPartenaireStr) || 0,
+                        parseInt(usageTotalStr) || 0,
+                        lastUsedStr || null,
+                        activeStr === 'true'
+                    );
+                } else {
+                    // Old format: Nom, Description, Type, Tags, Δ P1, Δ P2, Usage Total, Dernier Usage, Actif
+                    const [name, description, type, tagsStr, delta1Str, delta2Str, usageTotalStr, lastUsedStr, activeStr] = row;
+
+                    // Parse tags
+                    const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
+
+                    // Parse lastUsed
+                    let lastUsed = null;
+                    if (lastUsedStr) {
+                        try {
+                            lastUsed = new Date(lastUsedStr).getTime();
+                        } catch (e) {
+                            // Ignore parsing error
+                        }
                     }
-                }
 
-                const action = new Action(
-                    null,
-                    name,
-                    description || '',
-                    type || '',
-                    tags,
-                    parseInt(delta1Str) || 0,
-                    parseInt(delta2Str) || 0,
-                    parseInt(usageTotalStr) || 0,
-                    lastUsed,
-                    activeStr === 'Oui'
-                );
+                    action = new Action(
+                        null,
+                        name,
+                        description || '',
+                        type || '',
+                        tags,
+                        parseInt(delta1Str) || 0,
+                        parseInt(delta2Str) || 0,
+                        parseInt(usageTotalStr) || 0,
+                        lastUsed,
+                        activeStr === 'Oui'
+                    );
+                }
 
                 actions.push(action);
             }
