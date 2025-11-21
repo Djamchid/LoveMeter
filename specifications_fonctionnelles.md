@@ -1,349 +1,280 @@
-Je te propose un jeu de **spécifications fonctionnelles V1 de LoveMeter**, centré sur trois scénarios d’usage :
+# 🌸 **LoveMeter — Spécifications Fonctionnelles V1.3 (Fusion complète)**
 
-1. **Paramétrage** (configuration du couple & des actions)
-2. **Saisie** (enregistrer les actions lors / après une crise)
-3. **Dashboard** (consultation des indicateurs & de l’historique)
-
-Aucune ligne de code, uniquement du fonctionnel.
+### *« Fleurs en plus, blessures en moins. »*
 
 ---
 
-## 0. Contexte & objectif
+# 0. **Concept général**
 
-**LoveMeter** est un outil / serious game de suivi de la dynamique de couple.
-Chaque action a un impact chiffré sur les “fleurs” de deux partenaires (P1, P2).
-Les totaux peuvent être négatifs, sans jugement moral : le système mesure des effets, pas des personnes.
+LoveMeter est un outil/jeu sérieux qui mesure **l’impact des actions affectives** entre deux partenaires (couple, proches, duo thérapeutique…).
+Chaque personne possède un stock de **fleurs émotionnelles**, qui peut être positif, neutre ou négatif.
 
-Les données sont **stockées localement** (localStorage du navigateur).
-L’outil est conçu pour un couple ou un thérapeute, dans une logique de **journal de couple neutre**.
+L’outil :
 
----
+* ne juge pas,
+* ne désigne pas de coupable,
+* n’analyse que l’impact **des gestes** et non la valeur **des personnes**.
 
-## 1. Modèle fonctionnel (vue d’ensemble)
-
-### 1.1. Acteurs
-
-* **Utilisateur.rice “Couple”** : un ou les deux partenaires, ou un observateur (thérapeute, médiateur), qui :
-
-  * paramètre l’outil,
-  * enregistre les actions,
-  * consulte les résultats.
-
-### 1.2. Objets métier
-
-* **Partenaire**
-
-  * Identité (prénom libre)
-  * Couleur (personnalisable, sans connotation imposée)
-  * Nombre de fleurs initiales
-  * Nombre de fleurs actuelles
-
-* **Action**
-
-  * Nom (obligatoire)
-  * Description (optionnelle)
-  * Type (texte libre : “réparation”, “escalade”, etc.)
-  * Tags (liste de mots-clés)
-  * Δ P1 (variation entière, positive, nulle ou négative)
-  * Δ P2
-  * Usage total (compteur)
-  * Dernier usage (timestamp)
-  * Statut actif/inactif
-
-* **Entrée d’historique**
-
-  * Timestamp
-  * Action utilisée
-  * Δ P1, Δ P2
-  * Totaux P1, P2 après l’action
-  * Note libre (commentaire)
-
-* **Paramètres globaux**
-
-  * Mode de tri des actions
-  * Seuils d’alerte (alert1, alert2) pour “découvert émotionnel”
-  * Fleurs initiales par partenaire
+Tout est stocké **localement** (navigateur).
 
 ---
 
-## 2. Scénario 1 : Paramétrage
+# 1. **Structure générale du modèle**
 
-### 2.1. Objectif
+## 1.1 Partenaires
 
-Permettre à l’utilisateur de **personnaliser** LoveMeter pour refléter au mieux leur couple :
+Chaque membre du duo possède :
 
-* Identité et couleur des partenaires
-* Fleurs initiales
-* Liste d’actions & impacts
-* Paramètres de tri et d’alertes
+* `prenom`
+* `couleur` (couleur émotionnelle personnalisée)
+* `fleursInitiales` (entier)
+* `fleursActuelles` (entier pouvant être négatif)
+* `emojiFleur` = 🌸 (si ≥ 0) ou 🥀 (si < 0), teinté de sa couleur
 
-### 2.2. Préconditions
+## 1.2 Actions
 
-* L’utilisateur a ouvert LoveMeter dans un navigateur compatible.
-* Une configuration précédente peut exister (localStorage), sinon les valeurs par défaut sont chargées.
+Une action est définie par :
 
-### 2.3. Parcours fonctionnel
+* `id`
+* `nom`
+* `description` (optionnel)
+* `type` (texte libre : réparation / escalade / etc.)
+* `tags` (liste)
+* `impactActeur` (Δ sur celui qui agit)
+* `impactPartenaire` (Δ sur l’autre)
+* `usageTotal`
+* `dernierUsage` (timestamp normalisé)
+* `active` (booléen)
 
-**Étape 1 – Personnaliser les partenaires**
+➡️ Fin de toute logique genrée (plus de “P1 femme / P2 homme”).
 
-1. L’utilisateur voit deux panneaux : **Partenaire 1** & **Partenaire 2** (noms par défaut).
-2. Il peut saisir un **prénom** pour chaque partenaire.
+## 1.3 Historique
 
-   * Règle : champ texte libre, non obligatoire, mais si vide → le système affiche un libellé par défaut (“Partenaire 1”, “Partenaire 2”).
-3. Il peut sélectionner une **couleur** pour chaque partenaire via un sélecteur de couleur.
-4. Les changements sont immédiatement :
+Chaque entrée contient :
 
-   * reflétés dans l’interface (labels, pastille de couleur),
-   * sauvegardés en localStorage.
+* `timestamp` (format strict `aaaa-mm-jj hh:mm:ss`)
+* `actorId`
+* `targetId`
+* `deltaActor`
+* `deltaPartner`
+* `totalActorAfter`
+* `totalPartnerAfter`
+* `note` (champ texte)
 
-**Étape 2 – Définir le nombre de fleurs initiales**
-
-1. L’utilisateur renseigne un **nombre de fleurs initiales commun** aux deux partenaires.
-
-   * Contrainte : entier (positif, nul ou négatif) dans une plage raisonnable (ex. -999 à 999).
-2. En cliquant sur “Appliquer aux deux partenaires” :
-
-   * Les valeurs **initiales** de P1 et P2 sont mises à jour.
-   * Les **fleurs actuelles** sont réinitialisées à cette valeur.
-   * L’historique est **remis à zéro** (car la chronologie des actions ne correspond plus).
-3. Le tout est sauvegardé en localStorage.
-
-**Étape 3 – Configurer la liste d’actions**
-
-1. L’utilisateur consulte la liste d’actions par défaut.
-
-2. Il peut :
-
-   * Ajouter une nouvelle action :
-
-     * renseigner : nom (obligatoire), description, type, tags, Δ P1, Δ P2.
-     * enregistrez → l’action apparaît dans la liste, avec usageTotal = 0.
-   * Modifier une action existante :
-
-     * cliquer sur “Modifier” → le formulaire de saisie se remplit avec les données existantes.
-     * modifier puis enregistrer → mise à jour des propriétés de l’action.
-   * Désactiver une action (V2 possible) :
-
-     * ne la supprime pas, mais elle ne figure plus dans la liste d’usage courante.
-
-3. Règles métier :
-
-   * Δ P1 et Δ P2 sont des **entiers**, positifs ou négatifs.
-   * Pas de limite stricte, mais l’interface peut suggérer une plage (ex : -10 à +10).
-   * Nom obligatoire : si vide, l’action ne peut pas être enregistrée.
-
-**Étape 4 – Paramètres de tri et d’alerte**
-
-1. L’utilisateur choisit un **mode de tri** par défaut pour les actions :
-
-   * par fréquence d’usage,
-   * par dernier usage,
-   * par nom,
-   * par impact total (Δ P1 + Δ P2).
-
-2. Il peut définir ou modifier les **seuils d’alerte** (alert1, alert2) :
-
-   * par exemple : alert1 = -10, alert2 = -20.
-   * Ces seuils servent à qualifier visuellement un “découvert émotionnel”.
-
-3. Ces paramètres sont persistés dans localStorage.
-
-### 2.4. Résultat attendu
-
-* LoveMeter est **personnalisé** au couple ou au contexte.
-* Toute modification est persistée entre deux sessions de navigateur.
+Toutes les valeurs historiques sont **figées** : modifier une action n’affecte pas l’historique.
 
 ---
 
-## 3. Scénario 2 : Saisie (enregistrer une action)
+# 2. **Page Mode d’emploi (obligatoire)**
 
-### 3.1. Objectif
+Une page dédiée explique en termes simples :
 
-Permettre l’enregistrement rapide d’une action (ou séquence d’actions) pendant ou après une crise / interaction, afin de suivre l’évolution des fleurs.
+## 2.1 Pourquoi LoveMeter
 
-### 3.2. Préconditions
+* mesurer les gestes, pas juger les personnes
+* rendre visibles les dynamiques
+* outil de dialogue et de débriefing
 
-* La phase de paramétrage de base (au moins les valeurs par défaut) est en place.
-* La liste d’actions contient au moins 1 action active.
+## 2.2 Notion de Δ (delta)
 
-### 3.3. Parcours fonctionnel principal
+* Δ = variation du stock de fleurs
+* chaque action a deux effets :
 
-**Étape 1 – Sélection de l’action**
+  * **sur celui qui agit**
+  * **sur celui qui reçoit**
 
-1. L’utilisateur ouvre LoveMeter (ou reste sur l’onglet Actions).
+## 2.3 Exemples
 
-2. Il voit une table/listing d’actions comprenant :
+* “Dire merci” → +3 / +3
+* “Crier” → -2 / -4
 
-   * Nom, Δ P1, Δ P2, type/tags, usage, dernier usage.
+## 2.4 Émojis de fleurs
 
-3. Il peut filtrer la liste par :
+* 🌸 = fleur vive (score ≥ 0)
+* 🥀 = fleur fanée (score < 0)
 
-   * texte (nom, type, tags),
-   * tri (fréquence, dernier usage, nom, impact total).
+Individuellement, on regarde **l’état de la fleur**, pas une météo.
 
-4. Pour enregistrer une action, l’utilisateur clique sur le bouton **“Enregistrer”** de la ligne concernée.
+## 2.5 Ambiance globale
 
-**Étape 2 – Application de l’action**
-
-1. Quand l’action A est enregistrée, le système :
-
-   * ajoute Δ P1 à P1.currentFlowers ;
-   * ajoute Δ P2 à P2.currentFlowers ;
-   * incrémente `usageTotal` de A ;
-   * met à jour `lastUsed` de A avec le timestamp courant ;
-   * crée une nouvelle entrée dans **l’historique** avec :
-
-     * timestamp,
-     * actionId,
-     * Δ P1, Δ P2,
-     * total1After, total2After,
-     * note vide.
-
-2. Les valeurs de fleurs peuvent devenir **négatives** (aucun blocage).
-
-3. Le système sauvegarde immédiatement l’état dans localStorage.
-
-**Étape 3 – Ajout de note (optionnel)**
-
-1. Dans la section Historique, l’utilisateur peut :
-
-   * saisir ou modifier une note textuelle associée à chaque entrée (à froid ou à chaud).
-2. La modification d’une note **ne modifie pas** les deltas ni les totaux, seulement le commentaire.
-
-### 3.4. Variantes / cas particuliers
-
-* **Saisie en rafale** :
-
-  * L’utilisateur peut enregistrer plusieurs actions d’affilée (au fur et à mesure d’un débriefing).
-  * Les totaux de fleurs sont mis à jour après chaque action, en cascade.
-
-* **Action modifiée ultérieurement** :
-
-  * Si les paramètres d’une action sont modifiés après coup, cela **n’affecte pas** les entrées d’historique déjà créées (leur Δ et leurs totaux restent tels qu’enregistrés).
-
-### 3.5. Résultat attendu
-
-* Chaque action saisie met à jour :
-
-  * les compteurs de fleurs,
-  * les statistiques d’usage de l’action,
-  * l’historique détaillé.
-* La saisie est fluide, utilisable en situation de débriefing réel.
+Explique la météo basée sur la **somme** des deux scores (voir section 4).
 
 ---
 
-## 4. Scénario 3 : Dashboard (consultation & compréhension)
+# 3. **Ergonomie de saisie**
 
-### 4.1. Objectif
+### 3.1 Chaque action a **deux boutons directs**
 
-Permettre de **visualiser rapidement l’état du couple** (fleurs actuelles, météo, équilibre) et de **parcourir l’historique** pour comprendre les dynamiques.
+Pour éviter des fenêtres intrusives :
 
-### 4.2. Préconditions
+| Action | Effet Acteur | Effet Partenaire | Bouton P1 | Bouton P2 |
+| ------ | ------------ | ---------------- | --------- | --------- |
 
-* Au moins une action a été saisie (sinon le dashboard reflète simplement l’état initial).
+* Bouton « **Agit : [Nom P1]** »
+* Bouton « **Agit : [Nom P2]** »
 
-### 4.3. Composants du dashboard
+### 3.2 Enregistrement
 
-**A. Vue Partenaires**
+Un seul clic :
 
-* Pour chaque partenaire, le dashboard affiche :
+1. applique l’impact à l’acteur et au partenaire
+2. met à jour les fleurs
+3. enregistre une ligne d’historique
+4. met à jour usage + timestamp
+5. sauvegarde localStorage
 
-  * prénom,
-  * couleur,
-  * nombre de fleurs actuelles (valeur entière, possiblement négative).
-* Règles d’affichage :
-
-  * si la valeur est en dessous de `alert1` → style “alerte” modérée ;
-  * si en dessous de `alert2` → style “alerte forte” (ex : badge ou couleur de texte).
-
-**B. Indicateur “Météo du couple”**
-
-* Calcul (exemple fonctionnel) :
-
-  * moyenne M = (P1.currentFlowers + P2.currentFlowers) / 2
-  * si M > 20 → “Météo du couple : ensoleillé”
-  * si M < -5 → “Météo du couple : orageux”
-  * sinon → “Météo du couple : variable”
-
-* L’indicateur est présenté sous forme de badge (couleur verte, orange, rouge selon le cas).
-
-**C. Indicateur “Équilibre”**
-
-* Calcul :
-
-  * diff = |P1.currentFlowers - P2.currentFlowers|
-  * si diff ≤ 5 → “Équilibre : globalement équilibré”
-  * si diff > 15 → “Équilibre : fortement déséquilibré”
-  * sinon → “Équilibre : légèrement déséquilibré”
-
-* Affiché sous forme de badge.
-
-**D. Historique**
-
-* Tableau chronologique des entrées :
-
-  * date/heure,
-  * nom de l’action,
-  * Δ P1, Δ P2 (avec couleur + / -),
-  * totaux après l’action,
-  * note modifiable.
-
-* L’utilisateur doit pouvoir :
-
-  * visualiser facilement la **chronologie** de la crise / période,
-  * repérer les enchaînements d’actions “escalade” / “réparation”.
-
-### 4.4. Export / Import pour analyse externe
-
-* Depuis le dashboard ou la section CSV, l’utilisateur peut :
-
-**Exporter les actions (CSV)** :
-
-* Pour partager une “grille d’actions” ou la reprendre ailleurs.
-
-**Exporter l’historique (CSV)** :
-
-* Pour analyser les données dans un tableur, un outil stat, etc.
-
-**Importer un historique (CSV)** :
-
-* Option avancée : recharger un historique (par exemple transféré d’un autre navigateur).
-* Fonctionnellement :
-
-  * le nouvel historique remplace l’ancien,
-  * les totaux de fleurs sont recalculés à partir de la dernière ligne de ce nouvel historique.
-
-### 4.5. Résultat attendu
-
-* Le dashboard doit permettre de répondre rapidement à des questions comme :
-
-  * **“Où en est-on aujourd’hui ?”** (niveau de fleurs, météo, équilibre)
-  * **“Quelles actions sont les plus fréquentes ? Les plus coûteuses ?”**
-  * **“Qu’est-ce qui a aidé à réparer les dernières crises ?”**
-
-Sans jugement de valeur, uniquement via **indicateurs visuels** et **données**.
+**Plus de pop-ups.**
+Grande fluidité même en usage “à chaud”.
 
 ---
 
-## 5. Règles transversales
+# 4. **Ambiance du couple (météo globale)**
 
-1. **Neutralité**
+L’ambiance globale n’est **plus** basée sur 4 cas ++/--/+-/-+.
 
-   * Aucun message ne désigne explicitement un “coupable” ou une “victime par défaut”.
-   * On parle d’**actions** et de leurs **effets ressentis**.
+Elle se fonde désormais sur la **somme des fleurs des deux partenaires** :
 
-2. **Confidentialité**
+[
+S = F_1 + F_2
+]
+[
+A = |S|
+]
 
-   * Toutes les données sont stockées en **localStorage** dans le navigateur.
-   * Aucune transmission automatique vers un serveur.
-   * L’export CSV est une action volontaire de l’utilisateur.
+## 4.1 Grille finale (seuils définitifs)
 
-3. **Résilience**
+### Si **S ≥ 0** (ambiance plutôt positive)
 
-   * En cas de corruption de données en localStorage, l’application doit retomber sur une configuration par défaut (sans crash).
+| A = |S| | Ambiance | Emoji |
+|-----|-------------|--------|
+| **0 → 5** | Neutre / stable | ⛅ |
+| **6 → 14** | Éclaircies | 🌤️ |
+| **15 → 29** | Beau temps | 🌞 |
+| **≥ 30** | Grand soleil | 🌞✨ |
 
-4. **Non-linéarité**
+### Si **S < 0** (ambiance plutôt difficile)
 
-   * La modification d’une action **n’affecte pas rétroactivement** l’historique.
-   * Les valeurs historiques sont figées à l’instant de la saisie.
+| A = |S| | Ambiance | Emoji |
+|-----|-------------|--------|
+| **0 → 5** | Neutre / légère tension | 🌫️ |
+| **6 → 14** | Averses émotionnelles | 🌧️ |
+| **15 → 29** | Gros temps | 🌧️⛈️ |
+| **≥ 30** | Tempête émotionnelle | ⛈️ |
 
+## 4.2 Représentation dans le dashboard
+
+* Une **carte ambiance** au centre :
+
+  * phrase + emoji
+* Couleurs de fond ajustées à l’intensité
+* Explications très simples (type météo du jour)
+
+---
+
+# 5. **Représentation individuelle**
+
+Pour chaque partenaire :
+
+* **fleursActuelles**
+* **émoji** :
+
+  * 🌸 = score ≥ 0
+  * 🥀 = score < 0
+* Couleur personnalisée (définit fond / contour / highlight)
+
+Exemples :
+
+```
+Alice : 12 🌸
+Mehdi : -3 🥀
+```
+
+---
+
+# 6. **Horodatage — règle normalisée**
+
+Tous les timestamps doivent être au format :
+
+```
+aaaa-mm-jj hh:mm:ss
+```
+
+Exemples :
+
+* 2025-02-11 09:23:54
+* 2024-11-02 17:05:00
+
+**Applications :**
+
+* historique
+* dernier usage d’une action
+* export CSV
+* import CSV
+
+---
+
+# 7. **Export / Import CSV**
+
+## 7.1 Actions CSV
+
+Champs :
+
+1. id
+2. nom
+3. description
+4. impactActeur
+5. impactPartenaire
+6. type
+7. tags
+8. usageTotal
+9. dernierUsage
+10. active
+
+## 7.2 Historique CSV
+
+Champs :
+
+1. timestamp
+2. actionId
+3. actorId
+4. targetId
+5. deltaActor
+6. deltaPartner
+7. totalActorAfter
+8. totalPartnerAfter
+9. note
+
+---
+
+# 8. **Terminologie UI**
+
+* “Effet acteur” / “Effet partenaire”
+* “Agit : Alice” / “Agit : Mehdi”
+* “Ambiance du couple”
+* “Fleur vive / fleur fanée”
+
+Plus jamais :
+
+* P1 = femme
+* P2 = homme
+* δP1 / δP2
+* équilibre/ déséquilibre émotionnel (remplacé par ambiance)
+
+---
+
+# 9. **Synthèse visuelle**
+
+## Indiv :
+
+* 🌸 ou 🥀, coloré selon la personne
+
+## Global :
+
+* ⛅ / 🌤️ / 🌞 / 🌞✨
+* 🌫️ / 🌧️ / 🌧️⛈️ / ⛈️
+
+Selon somme ( S ) et amplitude ( A ).
+
+---
+
+# 🎉 **LoveMeter V1.3 est maintenant spécifié proprement.**
