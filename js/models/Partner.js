@@ -22,6 +22,15 @@ export class Partner {
     }
 
     /**
+     * Get flower emoji based on current flowers
+     * 🌸 = fleur vive (score >= 0)
+     * 🥀 = fleur fanée (score < 0)
+     */
+    getFlowerEmoji() {
+        return this.currentFlowers >= 0 ? '🌸' : '🥀';
+    }
+
+    /**
      * Reset flowers to initial value
      */
     reset() {

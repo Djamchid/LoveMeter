@@ -9,8 +9,8 @@ export class Action {
         description = '',
         type = '',
         tags = [],
-        delta1 = 0,
-        delta2 = 0,
+        impactActeur = 0,
+        impactPartenaire = 0,
         usageTotal = 0,
         lastUsed = null,
         active = true
@@ -20,8 +20,8 @@ export class Action {
         this.description = description;
         this.type = type;
         this.tags = Array.isArray(tags) ? tags : [];
-        this.delta1 = parseInt(delta1) || 0;
-        this.delta2 = parseInt(delta2) || 0;
+        this.impactActeur = parseInt(impactActeur) || 0;
+        this.impactPartenaire = parseInt(impactPartenaire) || 0;
         this.usageTotal = parseInt(usageTotal) || 0;
         this.lastUsed = lastUsed;
         this.active = active;
@@ -39,14 +39,27 @@ export class Action {
      */
     recordUsage() {
         this.usageTotal++;
-        this.lastUsed = Date.now();
+        this.lastUsed = this.formatTimestamp(new Date());
     }
 
     /**
-     * Get total impact (sum of both deltas)
+     * Format timestamp to normalized format: aaaa-mm-jj hh:mm:ss
+     */
+    formatTimestamp(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    /**
+     * Get total impact (sum of both impacts)
      */
     getTotalImpact() {
-        return this.delta1 + this.delta2;
+        return this.impactActeur + this.impactPartenaire;
     }
 
     /**
@@ -73,8 +86,8 @@ export class Action {
             description: this.description,
             type: this.type,
             tags: this.tags,
-            delta1: this.delta1,
-            delta2: this.delta2,
+            impactActeur: this.impactActeur,
+            impactPartenaire: this.impactPartenaire,
             usageTotal: this.usageTotal,
             lastUsed: this.lastUsed,
             active: this.active
@@ -82,17 +95,21 @@ export class Action {
     }
 
     /**
-     * Create from plain object
+     * Create from plain object (with backward compatibility)
      */
     static fromJSON(data) {
+        // Backward compatibility: support old delta1/delta2 field names
+        const impactActeur = data.impactActeur !== undefined ? data.impactActeur : data.delta1;
+        const impactPartenaire = data.impactPartenaire !== undefined ? data.impactPartenaire : data.delta2;
+
         return new Action(
             data.id,
             data.name,
             data.description || '',
             data.type || '',
             data.tags || [],
-            data.delta1,
-            data.delta2,
+            impactActeur,
+            impactPartenaire,
             data.usageTotal || 0,
             data.lastUsed || null,
             data.active !== undefined ? data.active : true

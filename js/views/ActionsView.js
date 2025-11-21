@@ -91,10 +91,10 @@ export class ActionsView {
         deltasSpan.className = 'action-deltas';
         deltasSpan.innerHTML = `
             <span style="color: ${partners[0].color}">
-                ${partners[0].getDisplayName()}: ${this.formatDelta(action.delta1)}
+                Effet Acteur: ${this.formatDelta(action.impactActeur)}
             </span>
             <span style="color: ${partners[1].color}">
-                ${partners[1].getDisplayName()}: ${this.formatDelta(action.delta2)}
+                Effet Partenaire: ${this.formatDelta(action.impactPartenaire)}
             </span>
         `;
 
@@ -141,15 +141,31 @@ export class ActionsView {
 
         infoDiv.appendChild(metaDiv);
 
-        const recordBtn = document.createElement('button');
-        recordBtn.className = 'btn btn-record';
-        recordBtn.textContent = 'Enregistrer';
-        recordBtn.addEventListener('click', () => {
-            this.controller.recordAction(action.id);
+        // V1.3: Two buttons per action (one for each partner)
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.className = 'action-buttons';
+
+        const recordBtn1 = document.createElement('button');
+        recordBtn1.className = 'btn btn-record';
+        recordBtn1.textContent = `Agit : ${partners[0].getDisplayName()}`;
+        recordBtn1.style.borderColor = partners[0].color;
+        recordBtn1.addEventListener('click', () => {
+            this.controller.recordAction(action.id, partners[0].id);
         });
 
+        const recordBtn2 = document.createElement('button');
+        recordBtn2.className = 'btn btn-record';
+        recordBtn2.textContent = `Agit : ${partners[1].getDisplayName()}`;
+        recordBtn2.style.borderColor = partners[1].color;
+        recordBtn2.addEventListener('click', () => {
+            this.controller.recordAction(action.id, partners[1].id);
+        });
+
+        buttonsDiv.appendChild(recordBtn1);
+        buttonsDiv.appendChild(recordBtn2);
+
         div.appendChild(infoDiv);
-        div.appendChild(recordBtn);
+        div.appendChild(buttonsDiv);
 
         return div;
     }

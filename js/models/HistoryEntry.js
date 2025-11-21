@@ -8,20 +8,24 @@ export class HistoryEntry {
         timestamp = null,
         actionId = '',
         actionName = '',
-        delta1 = 0,
-        delta2 = 0,
-        total1After = 0,
-        total2After = 0,
+        actorId = '',
+        targetId = '',
+        deltaActor = 0,
+        deltaPartner = 0,
+        totalActorAfter = 0,
+        totalPartnerAfter = 0,
         note = ''
     ) {
         this.id = id || this.generateId();
-        this.timestamp = timestamp || Date.now();
+        this.timestamp = timestamp || this.formatTimestamp(new Date());
         this.actionId = actionId;
         this.actionName = actionName;
-        this.delta1 = delta1;
-        this.delta2 = delta2;
-        this.total1After = total1After;
-        this.total2After = total2After;
+        this.actorId = actorId;
+        this.targetId = targetId;
+        this.deltaActor = deltaActor;
+        this.deltaPartner = deltaPartner;
+        this.totalActorAfter = totalActorAfter;
+        this.totalPartnerAfter = totalPartnerAfter;
         this.note = note;
     }
 
@@ -33,17 +37,29 @@ export class HistoryEntry {
     }
 
     /**
+     * Format timestamp to normalized format: aaaa-mm-jj hh:mm:ss
+     */
+    formatTimestamp(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    /**
      * Format timestamp for display
      */
     getFormattedDate() {
+        // If timestamp is already a string in the correct format, return it
+        if (typeof this.timestamp === 'string') {
+            return this.timestamp;
+        }
+        // Otherwise, convert from milliseconds (backward compatibility)
         const date = new Date(this.timestamp);
-        return date.toLocaleString('fr-FR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return this.formatTimestamp(date);
     }
 
     /**
@@ -62,27 +78,39 @@ export class HistoryEntry {
             timestamp: this.timestamp,
             actionId: this.actionId,
             actionName: this.actionName,
-            delta1: this.delta1,
-            delta2: this.delta2,
-            total1After: this.total1After,
-            total2After: this.total2After,
+            actorId: this.actorId,
+            targetId: this.targetId,
+            deltaActor: this.deltaActor,
+            deltaPartner: this.deltaPartner,
+            totalActorAfter: this.totalActorAfter,
+            totalPartnerAfter: this.totalPartnerAfter,
             note: this.note
         };
     }
 
     /**
-     * Create from plain object
+     * Create from plain object (with backward compatibility)
      */
     static fromJSON(data) {
+        // Backward compatibility for old field names
+        const actorId = data.actorId || 'partner1';
+        const targetId = data.targetId || 'partner2';
+        const deltaActor = data.deltaActor !== undefined ? data.deltaActor : data.delta1;
+        const deltaPartner = data.deltaPartner !== undefined ? data.deltaPartner : data.delta2;
+        const totalActorAfter = data.totalActorAfter !== undefined ? data.totalActorAfter : data.total1After;
+        const totalPartnerAfter = data.totalPartnerAfter !== undefined ? data.totalPartnerAfter : data.total2After;
+
         return new HistoryEntry(
             data.id,
             data.timestamp,
             data.actionId,
             data.actionName,
-            data.delta1,
-            data.delta2,
-            data.total1After,
-            data.total2After,
+            actorId,
+            targetId,
+            deltaActor,
+            deltaPartner,
+            totalActorAfter,
+            totalPartnerAfter,
             data.note || ''
         );
     }
@@ -93,19 +121,21 @@ export class HistoryEntry {
     toCSVRow() {
         return [
             this.getFormattedDate(),
-            this.actionName,
-            this.delta1,
-            this.delta2,
-            this.total1After,
-            this.total2After,
+            this.actionId,
+            this.actorId,
+            this.targetId,
+            this.deltaActor,
+            this.deltaPartner,
+            this.totalActorAfter,
+            this.totalPartnerAfter,
             this.note.replace(/"/g, '""') // Escape quotes for CSV
         ];
     }
 
     /**
-     * Get CSV headers
+     * Get CSV headers (V1.3 format)
      */
     static getCSVHeaders() {
-        return ['Date/Heure', 'Action', 'Δ P1', 'Δ P2', 'Total P1', 'Total P2', 'Note'];
+        return ['timestamp', 'actionId', 'actorId', 'targetId', 'deltaActor', 'deltaPartner', 'totalActorAfter', 'totalPartnerAfter', 'note'];
     }
 }

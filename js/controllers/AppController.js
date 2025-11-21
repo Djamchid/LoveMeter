@@ -90,29 +90,37 @@ export class AppController {
     }
 
     /**
-     * Record an action
+     * Record an action (V1.3 with actorId)
      */
-    recordAction(actionId) {
+    recordAction(actionId, actorId) {
         const action = this.data.actions.find(a => a.id === actionId);
         if (!action) return;
 
+        // Find actor and target
+        const actor = this.data.partners.find(p => p.id === actorId);
+        const target = this.data.partners.find(p => p.id !== actorId);
+
+        if (!actor || !target) return;
+
         // Update partner flowers
-        this.data.partners[0].addFlowers(action.delta1);
-        this.data.partners[1].addFlowers(action.delta2);
+        actor.addFlowers(action.impactActeur);
+        target.addFlowers(action.impactPartenaire);
 
         // Update action usage
         action.recordUsage();
 
-        // Create history entry
+        // Create history entry (V1.3 format)
         const historyEntry = new HistoryEntry(
             null,
-            Date.now(),
+            null, // Will use current timestamp
             action.id,
             action.name,
-            action.delta1,
-            action.delta2,
-            this.data.partners[0].currentFlowers,
-            this.data.partners[1].currentFlowers,
+            actor.id,
+            target.id,
+            action.impactActeur,
+            action.impactPartenaire,
+            actor.currentFlowers,
+            target.currentFlowers,
             ''
         );
 
@@ -213,8 +221,8 @@ export class AppController {
             actionData.description,
             actionData.type,
             actionData.tags,
-            actionData.delta1,
-            actionData.delta2,
+            actionData.impactActeur,
+            actionData.impactPartenaire,
             0,
             null,
             true
@@ -237,8 +245,8 @@ export class AppController {
         action.description = actionData.description;
         action.type = actionData.type;
         action.tags = actionData.tags;
-        action.delta1 = actionData.delta1;
-        action.delta2 = actionData.delta2;
+        action.impactActeur = actionData.impactActeur;
+        action.impactPartenaire = actionData.impactPartenaire;
 
         this.saveData();
         this.renderAll();
