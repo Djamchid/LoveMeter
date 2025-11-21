@@ -181,6 +181,9 @@ export class AppController {
         this.data.partners[1].initialFlowers = initialFlowers;
         this.data.partners[1].currentFlowers = initialFlowers;
 
+        // Clear history
+        this.data.history = [];
+
         this.saveData();
         this.renderAll();
     }
