@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoveMeter - Suivi de la dynamique de couple</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>🌸 LoveMeter</h1>
+            <p class="subtitle">Suivi de la dynamique de couple</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+            <button class="nav-btn" data-view="actions">Saisie</button>
+            <button class="nav-btn" data-view="settings">Paramétrage</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-content">
+            <!-- Dashboard View -->
+            <section id="dashboard-view" class="view active">
+                <h2>Tableau de Bord</h2>
+
+                <!-- Partners Overview -->
+                <div class="partners-overview">
+                    <div class="partner-card" id="partner1-card">
+                        <div class="partner-header">
+                            <div class="partner-color-indicator"></div>
+                            <h3 class="partner-name">Partenaire 1</h3>
+                        </div>
+                        <div class="flower-count">
+                            <span class="flower-label">Fleurs:</span>
+                            <span class="flower-value">0</span>
+                        </div>
+                        <div class="alert-indicator"></div>
+                    </div>
+
+                    <div class="partner-card" id="partner2-card">
+                        <div class="partner-header">
+                            <div class="partner-color-indicator"></div>
+                            <h3 class="partner-name">Partenaire 2</h3>
+                        </div>
+                        <div class="flower-count">
+                            <span class="flower-label">Fleurs:</span>
+                            <span class="flower-value">0</span>
+                        </div>
+                        <div class="alert-indicator"></div>
+                    </div>
+                </div>
+
+                <!-- Indicators -->
+                <div class="indicators">
+                    <div class="indicator-card weather-indicator">
+                        <h4>Météo du couple</h4>
+                        <div class="indicator-value" id="weather-value">Variable</div>
+                    </div>
+
+                    <div class="indicator-card balance-indicator">
+                        <h4>Équilibre</h4>
+                        <div class="indicator-value" id="balance-value">Équilibré</div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="history-section">
+                    <div class="section-header">
+                        <h3>Historique</h3>
+                        <div class="history-actions">
+                            <button class="btn btn-secondary" id="export-history-btn">Exporter (CSV)</button>
+                            <button class="btn btn-secondary" id="import-history-btn">Importer (CSV)</button>
+                            <input type="file" id="import-history-file" accept=".csv" style="display:none;">
+                        </div>
+                    </div>
+                    <div class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date/Heure</th>
+                                    <th>Action</th>
+                                    <th>Δ P1</th>
+                                    <th>Δ P2</th>
+                                    <th>Total P1</th>
+                                    <th>Total P2</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr class="empty-state">
+                                    <td colspan="7">Aucune action enregistrée</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions View -->
+            <section id="actions-view" class="view">
+                <h2>Saisie d'Actions</h2>
+
+                <!-- Filter and Sort Controls -->
+                <div class="actions-controls">
+                    <input type="text" id="action-filter" class="filter-input" placeholder="Filtrer par nom, type ou tags...">
+                    <select id="action-sort" class="sort-select">
+                        <option value="frequency">Trier par fréquence</option>
+                        <option value="recent">Trier par dernier usage</option>
+                        <option value="name">Trier par nom</option>
+                        <option value="impact">Trier par impact total</option>
+                    </select>
+                </div>
+
+                <!-- Actions List -->
+                <div class="actions-list" id="actions-list">
+                    <div class="empty-state">
+                        <p>Aucune action configurée. Allez dans Paramétrage pour créer des actions.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settings-view" class="view">
+                <h2>Paramétrage</h2>
+
+                <!-- Partner Configuration -->
+                <div class="settings-section">
+                    <h3>Partenaires</h3>
+                    <div class="partner-config-grid">
+                        <div class="partner-config">
+                            <h4>Partenaire 1</h4>
+                            <div class="form-group">
+                                <label>Prénom</label>
+                                <input type="text" id="partner1-name" placeholder="Partenaire 1">
+                            </div>
+                            <div class="form-group">
+                                <label>Couleur</label>
+                                <input type="color" id="partner1-color" value="#4CAF50">
+                            </div>
+                        </div>
+
+                        <div class="partner-config">
+                            <h4>Partenaire 2</h4>
+                            <div class="form-group">
+                                <label>Prénom</label>
+                                <input type="text" id="partner2-name" placeholder="Partenaire 2">
+                            </div>
+                            <div class="form-group">
+                                <label>Couleur</label>
+                                <input type="color" id="partner2-color" value="#2196F3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Initial Flowers -->
+                <div class="settings-section">
+                    <h3>Fleurs Initiales</h3>
+                    <div class="form-group">
+                        <label>Nombre de fleurs initiales (commun aux deux partenaires)</label>
+                        <input type="number" id="initial-flowers" value="0" min="-999" max="999">
+                        <button class="btn btn-primary" id="apply-initial-flowers">Appliquer aux deux partenaires</button>
+                        <p class="warning-text">⚠️ Cela réinitialisera les fleurs actuelles et l'historique.</p>
+                    </div>
+                </div>
+
+                <!-- Alert Thresholds -->
+                <div class="settings-section">
+                    <h3>Seuils d'Alerte</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Alerte 1 (modérée)</label>
+                            <input type="number" id="alert1" value="-10">
+                        </div>
+                        <div class="form-group">
+                            <label>Alerte 2 (forte)</label>
+                            <input type="number" id="alert2" value="-20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Default Sort Mode -->
+                <div class="settings-section">
+                    <h3>Tri par Défaut</h3>
+                    <div class="form-group">
+                        <label>Mode de tri des actions</label>
+                        <select id="default-sort">
+                            <option value="frequency">Par fréquence d'usage</option>
+                            <option value="recent">Par dernier usage</option>
+                            <option value="name">Par nom</option>
+                            <option value="impact">Par impact total</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions Management -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h3>Gestion des Actions</h3>
+                        <button class="btn btn-primary" id="add-action-btn">+ Nouvelle Action</button>
+                    </div>
+
+                    <!-- Action Form -->
+                    <div class="action-form" id="action-form" style="display:none;">
+                        <h4 id="action-form-title">Nouvelle Action</h4>
+                        <input type="hidden" id="action-form-id">
+
+                        <div class="form-group">
+                            <label>Nom *</label>
+                            <input type="text" id="action-name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="action-description" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Type</label>
+                                <input type="text" id="action-type" placeholder="ex: réparation, escalade">
+                            </div>
+                            <div class="form-group">
+                                <label>Tags (séparés par des virgules)</label>
+                                <input type="text" id="action-tags" placeholder="ex: communication, conflit">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Δ Partenaire 1</label>
+                                <input type="number" id="action-delta1" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Δ Partenaire 2</label>
+                                <input type="number" id="action-delta2" value="0">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="save-action-btn">Enregistrer</button>
+                            <button class="btn btn-secondary" id="cancel-action-btn">Annuler</button>
+                        </div>
+                    </div>
+
+                    <!-- Actions List in Settings -->
+                    <div class="settings-actions-list" id="settings-actions-list">
+                        <div class="empty-state">
+                            <p>Aucune action configurée. Cliquez sur "Nouvelle Action" pour commencer.</p>
+                        </div>
+                    </div>
+
+                    <!-- CSV Export/Import for Actions -->
+                    <div class="csv-actions">
+                        <button class="btn btn-secondary" id="export-actions-btn">Exporter Actions (CSV)</button>
+                        <button class="btn btn-secondary" id="import-actions-btn">Importer Actions (CSV)</button>
+                        <input type="file" id="import-actions-file" accept=".csv" style="display:none;">
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Load the application as ES6 module -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
