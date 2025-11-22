@@ -89,28 +89,20 @@ export class HistoryEntry {
     }
 
     /**
-     * Create from plain object (with backward compatibility)
+     * Create from plain object
      */
     static fromJSON(data) {
-        // Backward compatibility for old field names
-        const actorId = data.actorId || 'partner1';
-        const targetId = data.targetId || 'partner2';
-        const deltaActor = data.deltaActor !== undefined ? data.deltaActor : data.delta1;
-        const deltaPartner = data.deltaPartner !== undefined ? data.deltaPartner : data.delta2;
-        const totalActorAfter = data.totalActorAfter !== undefined ? data.totalActorAfter : data.total1After;
-        const totalPartnerAfter = data.totalPartnerAfter !== undefined ? data.totalPartnerAfter : data.total2After;
-
         return new HistoryEntry(
             data.id,
             data.timestamp,
             data.actionId,
             data.actionName,
-            actorId,
-            targetId,
-            deltaActor,
-            deltaPartner,
-            totalActorAfter,
-            totalPartnerAfter,
+            data.actorId,
+            data.targetId,
+            data.deltaActor,
+            data.deltaPartner,
+            data.totalActorAfter,
+            data.totalPartnerAfter,
             data.note || ''
         );
     }
