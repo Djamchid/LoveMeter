@@ -354,11 +354,26 @@ export class SettingsView {
             const csvContent = await CSVExporter.readFile(file);
             const actions = CSVExporter.importActions(csvContent);
 
-            if (confirm(`Importer ${actions.length} actions ? Cela remplacera la liste d'actions actuelle.`)) {
+            // Check if default actions are returned (CSV was empty or corrupted)
+            const defaultActions = Action.getDefaultActions();
+            const isDefaultActions = actions.length === defaultActions.length &&
+                                     actions.every((a, i) => a.name === defaultActions[i].name);
+
+            let message;
+            if (isDefaultActions) {
+                message = 'Le fichier CSV est vide ou incompatible (format V1.3 requis). Les actions par défaut seront chargées. Continuer ?';
+            } else {
+                message = `Importer ${actions.length} actions ? Cela remplacera la liste d'actions actuelle.`;
+            }
+
+            if (confirm(message)) {
                 this.controller.importActions(actions);
+                if (isDefaultActions) {
+                    alert('Actions par défaut chargées (CSV vide ou incompatible).');
+                }
             }
         } catch (error) {
-            alert('Erreur lors de l\'import du fichier CSV : ' + error.message);
+            alert('Erreur lors de l\'import : fichier corrompu ou format incompatible.');
         }
 
         // Reset file input

@@ -95,21 +95,17 @@ export class Action {
     }
 
     /**
-     * Create from plain object (with backward compatibility)
+     * Create from plain object
      */
     static fromJSON(data) {
-        // Backward compatibility: support old delta1/delta2 field names
-        const impactActeur = data.impactActeur !== undefined ? data.impactActeur : data.delta1;
-        const impactPartenaire = data.impactPartenaire !== undefined ? data.impactPartenaire : data.delta2;
-
         return new Action(
             data.id,
             data.name,
             data.description || '',
             data.type || '',
             data.tags || [],
-            impactActeur,
-            impactPartenaire,
+            data.impactActeur,
+            data.impactPartenaire,
             data.usageTotal || 0,
             data.lastUsed || null,
             data.active !== undefined ? data.active : true

@@ -233,11 +233,22 @@ export class DashboardView {
             const data = this.controller.getData();
             const history = CSVExporter.importHistory(csvContent, data.partners);
 
-            if (confirm('Importer cet historique remplacera l\'historique actuel et recalculera les totaux de fleurs. Continuer ?')) {
+            let message = 'Importer cet historique remplacera l\'historique actuel et recalculera les totaux de fleurs.';
+
+            if (history.length === 0) {
+                message = 'Le fichier CSV est vide ou incompatible (format V1.3 requis). L\'historique sera effacé.';
+            }
+
+            message += ' Continuer ?';
+
+            if (confirm(message)) {
                 this.controller.importHistory(history);
+                if (history.length === 0) {
+                    alert('Historique effacé (CSV vide ou incompatible).');
+                }
             }
         } catch (error) {
-            alert('Erreur lors de l\'import du fichier CSV : ' + error.message);
+            alert('Erreur lors de l\'import : fichier corrompu ou format incompatible.');
         }
 
         // Reset file input

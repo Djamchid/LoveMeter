@@ -107,35 +107,34 @@ export class CSVExporter {
     }
 
     /**
-     * Import history from CSV (V1.3 format with backward compatibility)
+     * Import history from CSV (V1.3 format only)
+     * Returns empty array if CSV is empty or corrupted
      * @returns {Array} Array of HistoryEntry objects
      */
     static importHistory(csvString, partners) {
         try {
             const lines = this.parseCSV(csvString);
 
+            // If empty CSV, return empty history
             if (lines.length < 2) {
-                throw new Error('CSV file is empty or invalid');
+                console.warn('CSV vide, historique vide retourné');
+                return [];
             }
 
             const headers = lines[0];
             const dataRows = lines.slice(1);
             const history = [];
 
-            // Check if V1.3 format (has actorId/targetId columns)
-            const isV13Format = headers.includes('actorId') && headers.includes('targetId');
-
+            // V1.3 format: timestamp, actionId, actorId, targetId, deltaActor, deltaPartner, totalActorAfter, totalPartnerAfter, note
             for (const row of dataRows) {
-                if (row.length < 6) continue; // Skip invalid rows
+                if (row.length < 8) continue; // Skip invalid rows
 
-                let entry;
-                if (isV13Format) {
-                    // V1.3 format: timestamp, actionId, actorId, targetId, deltaActor, deltaPartner, totalActorAfter, totalPartnerAfter, note
+                try {
                     const [timestamp, actionId, actorId, targetId, deltaActorStr, deltaPartnerStr, totalActorStr, totalPartnerStr, note] = row;
 
-                    entry = new HistoryEntry(
+                    const entry = new HistoryEntry(
                         null,
-                        timestamp, // Already in normalized format
+                        timestamp, // Format aaaa-mm-jj hh:mm:ss
                         actionId || '',
                         '', // actionName will be empty for CSV imports
                         actorId || 'partner1',
@@ -146,38 +145,12 @@ export class CSVExporter {
                         parseInt(totalPartnerStr) || 0,
                         note || ''
                     );
-                } else {
-                    // Old format: Date/Heure, Action, Δ P1, Δ P2, Total P1, Total P2, Note
-                    const [dateStr, actionName, delta1Str, delta2Str, total1Str, total2Str, note] = row;
 
-                    // Parse date (try to parse French format)
-                    let timestamp = Date.now();
-                    try {
-                        const dateParts = dateStr.match(/(\d+)\/(\d+)\/(\d+)[,\s]+(\d+):(\d+)/);
-                        if (dateParts) {
-                            const [, day, month, year, hours, minutes] = dateParts;
-                            timestamp = new Date(year, month - 1, day, hours, minutes).getTime();
-                        }
-                    } catch (e) {
-                        // Use current time if parsing fails
-                    }
-
-                    entry = new HistoryEntry(
-                        null,
-                        timestamp,
-                        '', // actionId will be empty for imported entries
-                        actionName,
-                        'partner1',
-                        'partner2',
-                        parseInt(delta1Str) || 0,
-                        parseInt(delta2Str) || 0,
-                        parseInt(total1Str) || 0,
-                        parseInt(total2Str) || 0,
-                        note || ''
-                    );
+                    history.push(entry);
+                } catch (rowError) {
+                    console.warn('Ligne d\'historique ignorée:', rowError);
+                    continue;
                 }
-
-                history.push(entry);
             }
 
             // Recalculate current flowers from last entry
@@ -191,42 +164,41 @@ export class CSVExporter {
 
             return history;
         } catch (error) {
-            console.error('Error importing history CSV:', error);
-            throw error;
+            console.error('Error importing history CSV, returning empty history:', error);
+            return [];
         }
     }
 
     /**
-     * Import actions from CSV (V1.3 format with backward compatibility)
+     * Import actions from CSV (V1.3 format only)
+     * Returns default actions if CSV is empty or corrupted
      * @returns {Array} Array of Action objects
      */
     static importActions(csvString) {
         try {
             const lines = this.parseCSV(csvString);
 
+            // If empty CSV, return default actions
             if (lines.length < 2) {
-                throw new Error('CSV file is empty or invalid');
+                console.warn('CSV vide, actions par défaut retournées');
+                return Action.getDefaultActions();
             }
 
             const headers = lines[0];
             const dataRows = lines.slice(1);
             const actions = [];
 
-            // Check if V1.3 format
-            const isV13Format = headers.includes('impactActeur') && headers.includes('impactPartenaire');
-
+            // V1.3 format: id, nom, description, impactActeur, impactPartenaire, type, tags, usageTotal, dernierUsage, active
             for (const row of dataRows) {
-                if (row.length < 6) continue; // Skip invalid rows
+                if (row.length < 10) continue; // Skip invalid rows
 
-                let action;
-                if (isV13Format) {
-                    // V1.3 format: id, nom, description, impactActeur, impactPartenaire, type, tags, usageTotal, dernierUsage, active
+                try {
                     const [id, name, description, impactActeurStr, impactPartenaireStr, type, tagsStr, usageTotalStr, lastUsedStr, activeStr] = row;
 
                     // Parse tags
                     const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
 
-                    action = new Action(
+                    const action = new Action(
                         id || null,
                         name,
                         description || '',
@@ -238,44 +210,19 @@ export class CSVExporter {
                         lastUsedStr || null,
                         activeStr === 'true'
                     );
-                } else {
-                    // Old format: Nom, Description, Type, Tags, Δ P1, Δ P2, Usage Total, Dernier Usage, Actif
-                    const [name, description, type, tagsStr, delta1Str, delta2Str, usageTotalStr, lastUsedStr, activeStr] = row;
 
-                    // Parse tags
-                    const tags = tagsStr ? tagsStr.split(';').map(t => t.trim()).filter(t => t) : [];
-
-                    // Parse lastUsed
-                    let lastUsed = null;
-                    if (lastUsedStr) {
-                        try {
-                            lastUsed = new Date(lastUsedStr).getTime();
-                        } catch (e) {
-                            // Ignore parsing error
-                        }
-                    }
-
-                    action = new Action(
-                        null,
-                        name,
-                        description || '',
-                        type || '',
-                        tags,
-                        parseInt(delta1Str) || 0,
-                        parseInt(delta2Str) || 0,
-                        parseInt(usageTotalStr) || 0,
-                        lastUsed,
-                        activeStr === 'Oui'
-                    );
+                    actions.push(action);
+                } catch (rowError) {
+                    console.warn('Ligne d\'action ignorée:', rowError);
+                    continue;
                 }
-
-                actions.push(action);
             }
 
-            return actions;
+            // If no valid actions imported, return default actions
+            return actions.length > 0 ? actions : Action.getDefaultActions();
         } catch (error) {
-            console.error('Error importing actions CSV:', error);
-            throw error;
+            console.error('Error importing actions CSV, returning default actions:', error);
+            return Action.getDefaultActions();
         }
     }
 
