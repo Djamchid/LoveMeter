@@ -184,11 +184,8 @@ export class AppController {
         // Clear history
         this.data.history = [];
 
-        // Reset action usage statistics
-        this.data.actions.forEach(action => {
-            action.usageTotal = 0;
-            action.lastUsed = null;
-        });
+        // Reset actions to default list
+        this.data.actions = Action.getDefaultActions();
 
         this.saveData();
         this.renderAll();
