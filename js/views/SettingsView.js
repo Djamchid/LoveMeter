@@ -220,7 +220,7 @@ export class SettingsView {
     applyInitialFlowers() {
         const initialFlowers = parseInt(this.initialFlowers.value) || 0;
 
-        if (confirm('⚠️ Cela réinitialisera les fleurs actuelles et l\'historique. Continuer ?')) {
+        if (confirm('⚠️ Cela réinitialisera les fleurs actuelles, l\'historique et les statistiques d\'usage des actions. Continuer ?')) {
             this.controller.applyInitialFlowers(initialFlowers);
         }
     }
