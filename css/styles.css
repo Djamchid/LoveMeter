@@ -240,21 +240,6 @@ body {
     color: #991b1b;
 }
 
-.balance-indicator .indicator-value.balanced {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.balance-indicator .indicator-value.slightly-unbalanced {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.balance-indicator .indicator-value.highly-unbalanced {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
 /* ===== History Section ===== */
 .history-section {
     background: var(--surface-color);

@@ -18,7 +18,6 @@ export class DashboardView {
         this.partner1Card = document.getElementById('partner1-card');
         this.partner2Card = document.getElementById('partner2-card');
         this.weatherValue = document.getElementById('weather-value');
-        this.balanceValue = document.getElementById('balance-value');
         this.historyTbody = document.getElementById('history-tbody');
         this.exportHistoryBtn = document.getElementById('export-history-btn');
         this.importHistoryBtn = document.getElementById('import-history-btn');
@@ -87,7 +86,7 @@ export class DashboardView {
     }
 
     /**
-     * Render weather and balance indicators (V1.3 météo system)
+     * Render weather indicator (V1.3 météo system)
      */
     renderIndicators(partners) {
         // Calculate weather based on V1.3 spec: S = F1 + F2, A = |S|
@@ -126,21 +125,6 @@ export class DashboardView {
                 this.weatherValue.classList.add('foggy');
                 this.weatherValue.textContent = '🌫️ Neutre / légère tension';
             }
-        }
-
-        // Calculate balance
-        const diff = Math.abs(partners[0].currentFlowers - partners[1].currentFlowers);
-        this.balanceValue.className = 'indicator-value';
-
-        if (diff <= 5) {
-            this.balanceValue.classList.add('balanced');
-            this.balanceValue.textContent = '⚖️ Équilibré';
-        } else if (diff > 15) {
-            this.balanceValue.classList.add('highly-unbalanced');
-            this.balanceValue.textContent = '⚠️ Fortement déséquilibré';
-        } else {
-            this.balanceValue.classList.add('slightly-unbalanced');
-            this.balanceValue.textContent = '⚖ Légèrement déséquilibré';
         }
     }
 
